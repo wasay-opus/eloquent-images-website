@@ -52,14 +52,15 @@ function Blogs() {
               <div className="blog-status">No articles available.</div>
             </div>
           )}
-          {posts.map((post) => (
+          {posts.map((post, index) => (
             <div className="col-md-4 col-sm-6" key={post.id}>
               <Link className="featuredBlog-card" to={`/blogs/${post.slug}`}>
                 <RemoteImage
                   src={post.featuredImage}
                   alt={post.title}
                   className="featuredBlog-cardImg"
-                  loading="lazy"
+                  loading={index < 3 ? "eager" : "lazy"}
+                  fetchPriority={index < 3 ? "high" : "auto"}
                   decoding="async"
                 />
                 <h3>{post.title}</h3>

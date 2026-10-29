@@ -1,6 +1,5 @@
 import { getToken } from './authToken.js';
-
-const API_BASE = 'https://api.eloquent-image.com';
+import { API_BASE } from './endpoints.js';
 
 let categoriesCache = null;
 let categoriesRequest = null;

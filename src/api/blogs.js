@@ -1,4 +1,4 @@
-const API_BASE = 'https://api.eloquent-image.com';
+import { API_BASE } from './endpoints.js';
 
 const BLOCKED_TAGS = [
   'script',
@@ -78,8 +78,25 @@ function mapBlogFull(blog) {
   };
 }
 
-async function fetchBlogsRaw(signal) {
-  const response = await fetch(`${API_BASE}/api/Blogs`, { signal });
+// Both the list and the detail page read this same endpoint, so moving between
+// them used to pay for the whole round trip twice - and the images cannot even
+// start downloading until it lands. Keep the response in memory briefly and
+// share a single in-flight request between callers.
+const LIST_CACHE_MS = 60000;
+
+let listCache = null;
+let listRequest = null;
+
+function throwIfAborted(signal) {
+  if (signal?.aborted) {
+    throw new DOMException('The blogs request was aborted', 'AbortError');
+  }
+}
+
+async function loadBlogs() {
+  // Deliberately without a caller signal: this request is shared, so one
+  // component unmounting must not abort it for everyone else.
+  const response = await fetch(`${API_BASE}/api/Blogs`);
 
   if (!response.ok) {
     throw new Error(`Blogs request failed with status ${response.status}`);
@@ -92,6 +109,29 @@ async function fetchBlogsRaw(signal) {
   }
 
   return data.data.filter((blog) => blog.status === 'ACTIVE');
+}
+
+async function fetchBlogsRaw(signal) {
+  throwIfAborted(signal);
+
+  if (listCache && Date.now() - listCache.at < LIST_CACHE_MS) {
+    return listCache.data;
+  }
+
+  if (!listRequest) {
+    listRequest = loadBlogs()
+      .then((data) => {
+        listCache = { at: Date.now(), data };
+        return data;
+      })
+      .finally(() => {
+        listRequest = null;
+      });
+  }
+
+  const blogs = await listRequest;
+  throwIfAborted(signal);
+  return blogs;
 }
 
 export async function fetchBlogs(signal) {

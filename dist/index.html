@@ -4,9 +4,17 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Images live on S3 and the data on a different host, so open both
+         connections while the app bundle is still downloading. Without this the
+         browser only starts the S3 DNS/TLS handshake after the API responds. -->
+    <link rel="preconnect" href="https://eloquentimagebucket.s3.us-east-1.amazonaws.com" />
+    <link rel="dns-prefetch" href="https://eloquentimagebucket.s3.us-east-1.amazonaws.com" />
+    <link rel="preconnect" href="https://api.eloquent-image.com" crossorigin />
+    <link rel="dns-prefetch" href="https://api.eloquent-image.com" />
     <title>Eloquent Images</title>
-    <script type="module" crossorigin src="/assets/index-DcgK7H_h.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CT4Cu5-e.css">
+    <script type="module" crossorigin src="/assets/index-jmAbtb76.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BsP3F5lE.css">
   </head>
   <body>
     <div id="root"></div>

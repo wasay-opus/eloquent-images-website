@@ -1,8 +1,7 @@
 // PRINTFUL FOLDER — "stripe-checkout"
 
 import { getToken } from '../authToken.js';
-
-const API_BASE = 'https://api.eloquent-image.com';
+import { API_BASE } from '../endpoints.js';
 
 export async function createPrintfulCheckout({ recipient, items }) {
   const token = getToken();

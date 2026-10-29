@@ -1,0 +1,1 @@
+import{r as s,j as o}from"./index-jmAbtb76.js";function f({alt:r,className:a="",fallbackText:i,src:e,...m}){const[l,t]=s.useState(!1);return s.useEffect(()=>{t(!1)},[e]),!e||l?o.jsx("span",{className:`${a} remote-image-fallback`,role:"img","aria-label":r,children:i||"Image is temporarily unavailable"}):o.jsx("img",{...m,alt:r,className:a,src:e,onError:()=>t(!0)})}export{f as R};

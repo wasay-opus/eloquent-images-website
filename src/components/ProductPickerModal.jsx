@@ -1,19 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { fetchPrintfulProducts } from '../api/printful/catalog.js';
-import { useAuth } from '../context/AuthContext.jsx';
 import RemoteImage from './RemoteImage.jsx';
 
 function ProductPickerModal({ image, onClose }) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { isAuthenticated } = useAuth();
   const [products, setProducts] = useState([]);
   const [status, setStatus] = useState('loading');
   const [query, setQuery] = useState('');
 
   useEffect(() => {
-    if (!isAuthenticated) return undefined;
     const controller = new AbortController();
     fetchPrintfulProducts()
       .then((items) => {
@@ -22,7 +18,7 @@ function ProductPickerModal({ image, onClose }) {
       })
       .catch(() => setStatus('error'));
     return () => controller.abort();
-  }, [isAuthenticated]);
+  }, []);
 
   // Lock background scroll and close on Escape while the modal is open.
   useEffect(() => {
@@ -91,20 +87,7 @@ function ProductPickerModal({ image, onClose }) {
         </div>
 
         <div className="pickerModal-body">
-          {!isAuthenticated && (
-            <p className="pickerModal-status">
-              Please{' '}
-              <Link
-                to="/login"
-                state={{ from: `${location.pathname}${location.search}` }}
-                onClick={onClose}
-              >
-                log in
-              </Link>{' '}
-              to choose a product for your design.
-            </p>
-          )}
-          {isAuthenticated && status === 'loading' && (
+          {status === 'loading' && (
             <p className="pickerModal-status">Loading products…</p>
           )}
           {status === 'error' && (

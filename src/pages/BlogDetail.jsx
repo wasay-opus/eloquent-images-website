@@ -224,9 +224,12 @@ function BlogDetail() {
         <div className="row justify-content-center">
           <div className="col-lg-10">
             <RemoteImage
-              className="blogDetail-mainImg"
-              src={post.featuredImage}
               alt={post.title}
+              className="blogDetail-mainImg"
+              decoding="async"
+              fetchPriority="high"
+              loading="eager"
+              src={post.featuredImage}
             />
             <h1>{post.title}</h1>
             <BlogContent html={post.content} />

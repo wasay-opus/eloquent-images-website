@@ -5,6 +5,7 @@ import Footer from './components/Footer.jsx';
 import Header from './components/Header.jsx';
 import Loader from './components/Loader.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { CartProvider } from './context/CartContext.jsx';
 import { SHOP_ENABLED } from './config.js';
 import 'aos/dist/aos.css';
 
@@ -117,10 +118,33 @@ function AppContent() {
       return;
     }
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'auto',
+    if (location.pathname === '/') {
+      window.scrollTo({
+        top: 0,
+        behavior: 'auto',
+      });
+      return;
+    }
+
+    // On inner pages, scroll so the navbar and a nice strip of banner (~90px)
+    // remain visible at the top, perfectly framing the first section below it.
+    const frameId = window.requestAnimationFrame(() => {
+      const header = document.querySelector('header.site-header');
+      const mainMenu = document.querySelector('.main-menu');
+      if (header) {
+        const navHeight = mainMenu?.offsetHeight || 70;
+        const bannerStrip = window.innerWidth >= 992 ? 90 : 20;
+        const targetY = Math.max(0, header.offsetHeight - navHeight - bannerStrip);
+        window.scrollTo({
+          top: targetY,
+          behavior: 'smooth',
+        });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }
     });
+
+    return () => window.cancelAnimationFrame(frameId);
   }, [location.pathname, location.hash, location.state]);
 
   return (
@@ -154,7 +178,9 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppContent />
+        <CartProvider>
+          <AppContent />
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   );

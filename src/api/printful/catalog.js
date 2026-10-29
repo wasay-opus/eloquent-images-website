@@ -8,8 +8,7 @@
 //   5. GET /api/printful-categories/:id         -> one category
 
 import { getToken } from '../authToken.js';
-
-const API_BASE = 'https://api.eloquent-image.com';
+import { API_BASE } from '../endpoints.js';
 
 // Simple in-memory caches so we don't re-hit the network on every navigation.
 let productsCache = null;

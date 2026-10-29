@@ -6,8 +6,10 @@ import {
 } from '../api/printful/catalog.js';
 import { fetchGalleryCategories, fetchAllCategoryImages } from '../api/gallery.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useCart } from '../context/CartContext.jsx';
 import RemoteImage from '../components/RemoteImage.jsx';
 import Loader from '../components/Loader.jsx';
+import AuthModal from '../components/AuthModal.jsx';
 import { sortGalleryCategories } from '../data/galleryCategoryOrder.js';
 
 function ProductDetail() {
@@ -25,6 +27,9 @@ function ProductDetail() {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [variantId, setVariantId] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [addedNotice, setAddedNotice] = useState(false);
+  const { addItem } = useCart();
 
   // Design picker (gallery images placed onto the product), filtered by category.
   const [galleryCategories, setGalleryCategories] = useState([]);
@@ -159,41 +164,64 @@ function ProductDetail() {
     [activeColor, product],
   );
 
-  // "Buy Now" — gate on auth + a chosen design, then go to the checkout page
-  // carrying everything that page needs (no cart in between).
-  function handleBuyNow() {
+  function buildCartItem() {
+    if (!selectedSize || !selectedDesign) return null;
+    return {
+      product: {
+        id: product.id,
+        name: product.name,
+        image: photos[0],
+        printFileType: product.printFileType,
+        options: product.options,
+      },
+      variant: {
+        variantId: selectedSize.variantId,
+        size: selectedSize.size,
+        color: activeColor?.name || '',
+        price: selectedSize.price,
+        priceLabel: selectedSize.priceLabel || product.priceRange,
+      },
+      design: { src: selectedDesign.src, caption: selectedDesign.caption },
+    };
+  }
+
+  function proceedToCheckout() {
+    const item = buildCartItem();
+    if (!item) return;
+    addItem(item);
+    navigate('/checkout');
+  }
+
+  function handleAddToCart() {
     setFeedback('');
-    if (!isAuthenticated) {
-      navigate('/login', {
-        state: { from: `${location.pathname}${location.search}${location.hash}` },
-      });
-      return;
-    }
     if (!selectedDesign) {
       setFeedback('no-design');
       return;
     }
     if (!selectedSize) return;
 
-    navigate('/checkout', {
-      state: {
-        product: {
-          id: product.id,
-          name: product.name,
-          image: photos[0],
-          printFileType: product.printFileType,
-          options: product.options,
-        },
-        variant: {
-          variantId: selectedSize.variantId,
-          size: selectedSize.size,
-          color: activeColor?.name || '',
-          price: selectedSize.price,
-          priceLabel: selectedSize.priceLabel || product.priceRange,
-        },
-        design: { src: selectedDesign.src, caption: selectedDesign.caption },
-      },
-    });
+    const item = buildCartItem();
+    if (!item) return;
+    addItem(item);
+    setAddedNotice(true);
+    setTimeout(() => setAddedNotice(false), 2500);
+  }
+
+  // "Buy Now" — gate on auth + a chosen design, then go to the checkout page
+  function handleBuyNow() {
+    setFeedback('');
+    if (!selectedDesign) {
+      setFeedback('no-design');
+      return;
+    }
+    if (!selectedSize) return;
+
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    proceedToCheckout();
   }
 
   if (status === 'loading') {
@@ -354,14 +382,24 @@ function ProductDetail() {
                 )}
               </div>
 
-              <button
-                type="button"
-                className="product-addBtn productDetail-addBtn"
-                onClick={handleBuyNow}
-                disabled={!selectedSize || !selectedSize.available}
-              >
-                Buy Now
-              </button>
+              <div className="productDetail-btnRow">
+                <button
+                  type="button"
+                  className="product-addBtn productDetail-cartBtn"
+                  onClick={handleAddToCart}
+                  disabled={!selectedSize || !selectedSize.available}
+                >
+                  {addedNotice ? '✓ Added to Cart!' : 'Add to Cart'}
+                </button>
+                <button
+                  type="button"
+                  className="product-addBtn productDetail-addBtn"
+                  onClick={handleBuyNow}
+                  disabled={!selectedSize || !selectedSize.available}
+                >
+                  Buy Now
+                </button>
+              </div>
 
               {feedback === 'no-design' && (
                 <p className="auth-error">Please choose a design to place on this product.</p>
@@ -378,6 +416,15 @@ function ProductDetail() {
           </div>
         </div>
       </div>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          setIsAuthModalOpen(false);
+          proceedToCheckout();
+        }}
+      />
     </section>
   );
 }

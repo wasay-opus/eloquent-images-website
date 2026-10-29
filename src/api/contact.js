@@ -1,4 +1,4 @@
-const API_BASE = 'https://api.eloquent-image.com';
+import { API_BASE } from './endpoints.js';
 
 export async function submitContact(contact) {
   const response = await fetch(`${API_BASE}/api/contact`, {

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { fetchPrintfulProducts, fetchPrintfulCategories } from '../api/printful/catalog.js';
-import { useAuth } from '../context/AuthContext.jsx';
 import RemoteImage from '../components/RemoteImage.jsx';
 import Loader from '../components/Loader.jsx';
 
@@ -93,18 +92,11 @@ function Pagination({ page, totalPages, onChange }) {
 }
 
 function Products() {
-  const location = useLocation();
-  const { isAuthenticated } = useAuth();
   const [products, setProducts] = useState([]);
   const [status, setStatus] = useState('loading');
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setStatus('unauthenticated');
-      return undefined;
-    }
-
     let cancelled = false;
     setStatus('loading');
     setProducts([]);
@@ -143,7 +135,7 @@ function Products() {
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated]);
+  }, []);
 
   const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
   const pageItems = useMemo(
@@ -166,21 +158,6 @@ function Products() {
         </div>
 
         <div className="row g-4">
-          {status === 'unauthenticated' && (
-            <div className="col-12">
-              <div className="blog-status">
-                Please{' '}
-                <Link
-                  className="cart-emptyLink"
-                  to="/login"
-                  state={{ from: `${location.pathname}${location.search}${location.hash}` }}
-                >
-                  log in
-                </Link>{' '}
-                to view products.
-              </div>
-            </div>
-          )}
           {status === 'loading' && (
             <div className="col-12">
               <Loader label="Loading products…" />

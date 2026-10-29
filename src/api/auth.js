@@ -1,6 +1,5 @@
 import { getToken } from './authToken.js';
-
-const API_BASE = 'https://api.eloquent-image.com';
+import { API_BASE } from './endpoints.js';
 
 // Shared request helper. Set `auth: true` to attach the stored Bearer token.
 async function request(path, { method = 'GET', body, auth = false } = {}) {
