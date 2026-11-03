@@ -109,42 +109,13 @@ function mapHomeCategorySection(section = {}) {
   };
 }
 
-function getCategoryRankMap(categories = []) {
-  return new Map(categories.map((category, index) => [String(category.id), index]));
-}
-
-function getImageCategoryRank(image = {}, categoryRankMap = new Map()) {
-  const ranks = (image.categories || [])
-    .map((category) => categoryRankMap.get(String(category.id ?? category.categoryId)))
-    .filter((rank) => Number.isInteger(rank));
-
-  return ranks.length ? Math.min(...ranks) : Number.MAX_SAFE_INTEGER;
-}
-
-function getImageFirstSortOrder(image = {}) {
-  const sortOrders = (image.categories || [])
-    .map((category) => Number(category.sortOrder))
-    .filter((sortOrder) => Number.isFinite(sortOrder) && sortOrder > 0);
-
-  return sortOrders.length ? Math.min(...sortOrders) : Number.MAX_SAFE_INTEGER;
-}
-
-function sortWhatsNewImages(images = [], categories = []) {
-  const categoryRankMap = getCategoryRankMap(categories);
-
-  return [...images].sort((first, second) => {
-    const categoryRankDiff =
-      getImageCategoryRank(first, categoryRankMap) - getImageCategoryRank(second, categoryRankMap);
-    if (categoryRankDiff !== 0) return categoryRankDiff;
-
-    const sortOrderDiff = getImageFirstSortOrder(first) - getImageFirstSortOrder(second);
-    if (sortOrderDiff !== 0) return sortOrderDiff;
-
-    return getImageName(first).localeCompare(getImageName(second), undefined, {
-      numeric: true,
-      sensitivity: 'base',
-    });
-  });
+function shuffleArray(array = []) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 function getImageSortOrder(image, categoryId) {
@@ -308,10 +279,7 @@ export async function fetchGalleryImages(signal) {
 // Fetch the latest N images across all categories that are marked as "What's New"
 export async function fetchLatestImages(limit = 15, signal) {
   const params = new URLSearchParams({ limit: '100', is_new: 'true' });
-  const [data, categories] = await Promise.all([
-    fetchJson(`${API_BASE}/api/images?${params.toString()}`, signal),
-    fetchGalleryCategories(),
-  ]);
+  const data = await fetchJson(`${API_BASE}/api/images?${params.toString()}`, signal);
 
   if (!data.success || !Array.isArray(data.data)) {
     throw new Error('The images response is invalid');
@@ -325,7 +293,8 @@ export async function fetchLatestImages(limit = 15, signal) {
     newImages = newImages.filter(isMarkedNew);
   }
 
-  newImages = sortWhatsNewImages(newImages, categories);
+  // Shuffle images randomly so each visit/refresh has a fresh, random sequence (no alphabetical order)
+  newImages = shuffleArray(newImages);
 
   return mapApiImages(newImages.slice(0, limit));
 }
