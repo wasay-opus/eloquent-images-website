@@ -65,6 +65,16 @@ function getImageUrl(value = '') {
   return markdownMatch ? markdownMatch[1] : url;
 }
 
+function deduplicateCategories(categories = []) {
+  const seen = new Set();
+  return (categories || []).filter((cat) => {
+    const key = String(cat?.id ?? cat?.categoryId ?? cat?.name ?? '').trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function mapApiImages(images = []) {
   return images
     .filter((image) => image.imageUrl)
@@ -73,7 +83,7 @@ function mapApiImages(images = []) {
       src: image.imageUrl,
       caption: cleanCaption(getImageName(image)),
       whatsNewFact: cleanCaption(getWhatsNewFact(image)),
-      categories: image.categories || [],
+      categories: deduplicateCategories(image.categories),
       type: 'image',
       // Kept so callers can sort a merged, cross-category feed newest-first.
       createdAt: image.createdAt || image.created_at || null,
